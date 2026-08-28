@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JayAgent Review Demo</title>
+    <style>
+        :root {
+            --bg: #0b1220;
+            --panel: rgba(15, 23, 42, 0.82);
+            --panel-border: rgba(148, 163, 184, 0.16);
+            --text: #e2e8f0;
+            --muted: #94a3b8;
+            --accent: #22c55e;
+            --danger: #ef4444;
+            --warn: #f59e0b;
+            --info: #38bdf8;
+            --line: rgba(148, 163, 184, 0.14);
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            color: var(--text);
+            font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+            background:
+                radial-gradient(circle at top left, rgba(56, 189, 248, 0.2), transparent 28%),
+                radial-gradient(circle at 80% 20%, rgba(34, 197, 94, 0.16), transparent 26%),
+                linear-gradient(180deg, #020617 0%, #0f172a 100%);
+        }
+        .container {
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: 40px 20px 64px;
+        }
+        .hero {
+            display: grid;
+            gap: 12px;
+            margin-bottom: 22px;
+        }
+        h1 {
+            margin: 0;
+            font-size: clamp(32px, 5vw, 50px);
+            letter-spacing: -0.04em;
+        }
+        .subtitle {
+            margin: 0;
+            max-width: 900px;
+            color: var(--muted);
+            line-height: 1.8;
+        }
+        .layout {
+            display: grid;
+            grid-template-columns: 1.05fr 0.95fr;
+            gap: 18px;
+            align-items: start;
+        }
+        .card {
+            background: var(--panel);
+            border: 1px solid var(--panel-border);
+            border-radius: 18px;
+            backdrop-filter: blur(14px);
+            box-shadow: 0 20px 60px rgba(2, 6, 23, 0.35);
+        }
+        .section {
+            padding: 20px;
+        }
+        .section h2 {
+            margin: 0 0 14px;
+            font-size: 18px;
+        }
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+        }
+        .stat {
+            padding: 14px;
+            border-radius: 14px;
+            background: rgba(15, 23, 42, 0.72);
+            border: 1px solid var(--line);
+        }
+        .stat .label {
+            display: block;
+            color: var(--muted);
+            font-size: 13px;
+            margin-bottom: 6px;
+        }
+        .stat .value {
+            font-size: 28px;
+            font-weight: 800;
+        }
+        .value.ok { color: var(--accent); }
+        .value.warn { color: var(--warn); }
+        .value.danger { color: var(--danger); }
+        .field { margin-top: 14px; }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #cbd5e1;
+            font-size: 14px;
+        }
+        input, textarea, select {
+            width: 100%;
+            border: 1px solid rgba(148, 163, 184, 0.18);
+            border-radius: 12px;
+            padding: 12px 14px;
+            background: rgba(15, 23, 42, 0.9);
+            color: var(--text);
+            outline: none;
+        }
+        textarea {
+            min-height: 220px;
+            resize: vertical;
+            font-family: Consolas, "SFMono-Regular", monospace;
+        }
+        button {
+            margin-top: 16px;
+            width: 100%;
+            border: 0;
+            border-radius: 12px;
+            padding: 13px 16px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            color: #04111e;
+            background: linear-gradient(135deg, #67e8f9, #22c55e);
+        }
+        button:hover { filter: brightness(1.05); }
+        .muted { color: var(--muted); }
+        .result-grid {
+            display: grid;
+            gap: 14px;
+        }
+        .summary-box, .history-box, .trend-box, .risk-item {
+            padding: 14px;
+            border-radius: 14px;
+            background: rgba(15, 23, 42, 0.72);
+            border: 1px solid var(--line);
+        }
+        .history-toolbar {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .history-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+        .history-actions button {
+            width: auto;
+            margin-top: 0;
+            padding: 10px 14px;
+            min-width: 110px;
+        }
+        .history-actions .secondary {
+            background: rgba(148, 163, 184, 0.14);
+            color: var(--text);
+        }
+        .detail-box {
+            margin-top: 16px;
+            padding: 16px;
+            border-radius: 14px;
+            background: rgba(2, 6, 23, 0.45);
+            border: 1px solid var(--line);
+        }
+        .summary-box h3,
+        .history-box h3,
+        .trend-box h3,
+        .detail-box h3 {
+            margin: 0 0 10px;
+            font-size: 16px;
+        }
+        .risk-item {
+            margin-top: 12px;
+            border-left: 4px solid var(--line);
+        }
+        .risk-critical { border-left-color: var(--danger); }
+        .risk-high { border-left-color: var(--warn); }
+        .risk-medium { border-left-color: #eab308; }
+        .risk-low { border-left-color: var(--accent); }
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border-radius: 999px;
+            padding: 5px 10px;
+            font-size: 12px;
+            background: rgba(148, 163, 184, 0.14);
+            color: #cbd5e1;
+        }
+        .list {
+            display: grid;
+            gap: 10px;
+        }
+        .list-item {
+            padding: 12px;
+            border-radius: 12px;
+            background: rgba(2, 6, 23, 0.45);
+            border: 1px solid var(--line);
+            cursor: pointer;
+        }
+        .list-item:hover {
+            border-color: rgba(56, 189, 248, 0.45);
+            transform: translateY(-1px);
+        }
+        .pager {
+            display: flex;
+            gap: 8px;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+        .pager .pager-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        .pager button {
+            width: auto;
+            margin-top: 0;
+            padding: 8px 12px;
+            min-width: 84px;
+        }
+        .list-top {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+        }
+        .trend {
+            display: grid;
+            gap: 8px;
+        }
+        .trend-row {
+            display: grid;
+            grid-template-columns: 170px 1fr 72px;
+            gap: 10px;
+            align-items: center;
+        }
+        .trend-bar {
+            height: 10px;
+            border-radius: 999px;
+            overflow: hidden;
+            background: rgba(148, 163, 184, 0.12);
+        }
+        .trend-bar span {
+            display: block;
+            height: 100%;
+            background: linear-gradient(90deg, #38bdf8, #22c55e);
+        }
+        pre {
+            white-space: pre-wrap;
+            word-break: break-word;
+            margin: 0;
+            padding: 12px;
+            border-radius: 12px;
+            background: rgba(2, 6, 23, 0.45);
+            border: 1px solid var(--line);
+            overflow-x: auto;
+        }
+        details { margin-top: 14px; }
+        @media (max-width: 1024px) {
+            .layout { grid-template-columns: 1fr; }
+            .history-toolbar { grid-template-columns: 1fr 1fr; }
+        }
+        @media (max-width: 720px) {
+            .grid-3 { grid-template-columns: 1fr; }
+            .trend-row { grid-template-columns: 1fr; }
+            .history-toolbar { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="hero">
+        <h1>JayAgent Review Demo</h1>
+        <p class="subtitle">
+            这个页面用于演示 JayAgent 的完整审查闭环：手动扫描、审查历史、统计概览和风险详情。
+            现在结果结构已经统一为 <code>reviewScope</code> + <code>summary</code>，历史记录也会自动保存，方便你直接观察每次审查的变化。
+        </p>
+    </div>
+
+    <div class="layout">
+        <section class="card section">
+            <h2>手动审查</h2>
+            <div class="field">
+                <label for="apiKey">API Key</label>
+                <input id="apiKey" type="password" placeholder="部署时配置的 JAYAGENT_API_KEY" autocomplete="off" />
+            </div>
+            <div class="field">
+                <label for="reviewScope">审查范围</label>
+                <input id="reviewScope" value="general" placeholder="例如：general / backend / finance" />
+            </div>
+            <div class="field">
+                <label for="filePath">文件路径</label>
+                <input id="filePath" value="demo.java" placeholder="例如：src/main/java/App.java" />
+            </div>
+            <div class="field">
+                <label for="codeDiff">代码变更</label>
+                <textarea id="codeDiff" placeholder="粘贴代码 diff，例如：&#10;+ String apiKey = &quot;sk-abc123&quot;;"></textarea>
+            </div>
+            <button onclick="scan()">提交审查</button>
+
+            <div style="margin-top: 18px;" class="grid-3" id="statsCards">
+                <div class="stat"><span class="label">总审查数</span><span class="value" id="totalReviews">-</span></div>
+                <div class="stat"><span class="label">高风险数</span><span class="value warn" id="highRiskReviews">-</span></div>
+                <div class="stat"><span class="label">平均分</span><span class="value ok" id="averageScore">-</span></div>
+            </div>
+        </section>
+
+        <section class="card section">
+            <h2>审查结果</h2>
+            <div id="result" class="muted">先提交一段 diff，或者从历史记录里查看最近的审查结果。</div>
+
+            <div class="history-box" style="margin-top: 16px;">
+                <h3>最近审查</h3>
+                <div class="history-toolbar">
+                    <div class="field" style="margin-top: 0;">
+                        <label for="historySource">来源</label>
+                        <select id="historySource">
+                            <option value="">全部</option>
+                            <option value="manual">手动</option>
+                            <option value="webhook">Webhook</option>
+                        </select>
+                    </div>
+                    <div class="field" style="margin-top: 0;">
+                        <label for="historyScope">审查范围</label>
+                        <input id="historyScope" placeholder="例如 general / backend" />
+                    </div>
+                    <div class="field" style="margin-top: 0;">
+                        <label for="historyFile">文件路径</label>
+                        <input id="historyFile" placeholder="按文件名或路径筛选" />
+                    </div>
+                    <div class="field" style="margin-top: 0;">
+                        <label for="historyHighRisk">高风险</label>
+                        <select id="historyHighRisk">
+                            <option value="">全部</option>
+                            <option value="true">仅高风险</option>
+                            <option value="false">仅正常</option>
+                        </select>
+                    </div>
+                    <div class="field" style="margin-top: 0;">
+                        <label for="historySize">每页条数</label>
+                        <select id="historySize">
+                            <option value="5">5</option>
+                            <option value="10" selected>10</option>
+                            <option value="20">20</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="history-actions">
+                    <button class="secondary" type="button" onclick="resetHistoryFilters()">重置筛选</button>
+                    <button type="button" onclick="applyHistoryFilters()">筛选历史</button>
+                </div>
+                <div id="historyList" class="list">
+                    <div class="muted">正在加载历史记录...</div>
+                </div>
+                <div class="pager">
+                    <div id="historyMeta" class="muted">-</div>
+                    <div class="pager-buttons">
+                        <button class="secondary" type="button" onclick="prevPage()">上一页</button>
+                        <button class="secondary" type="button" onclick="nextPage()">下一页</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="detail-box">
+                <h3>审查详情</h3>
+                <div id="detailPanel" class="muted">点击一条历史记录查看完整详情。</div>
+            </div>
+
+            <div class="trend-box" style="margin-top: 16px;">
+                <h3>趋势预览</h3>
+                <div id="trendList" class="trend">
+                    <div class="muted">暂无趋势数据。</div>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+
+<script>
+    function escapeHtml(text) {
+        return String(text ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    const savedApiKey = sessionStorage.getItem('jayagent-api-key');
+    if (savedApiKey) document.getElementById('apiKey').value = savedApiKey;
+
+    function apiFetch(url, options = {}) {
+        const apiKey = document.getElementById('apiKey')?.value.trim() || '';
+        if (apiKey) sessionStorage.setItem('jayagent-api-key', apiKey);
+        const headers = new Headers(options.headers || {});
+        if (apiKey) headers.set('X-JayAgent-Api-Key', apiKey);
+        return fetch(url, { ...options, headers });
+    }
+
+    function riskClass(level) {
+        return `risk-${String(level || '').toLowerCase()}`;
+    }
+
+    function scoreClass(score) {
+        if (score >= 80) return 'ok';
+        if (score >= 60) return 'warn';
+        return 'danger';
+    }
+
+    function renderStats(stats) {
+        document.getElementById('totalReviews').textContent = stats?.totalReviews ?? 0;
+        document.getElementById('highRiskReviews').textContent = stats?.highRiskReviews ?? 0;
+        document.getElementById('averageScore').textContent = stats?.averageScore ?? 100;
+    }
+
+    const historyState = {
+        page: 0,
+        totalPages: 0,
+        total: 0
+    };
+
+    function renderHistory(items) {
+        const historyList = document.getElementById('historyList');
+        if (!Array.isArray(items) || items.length === 0) {
+            historyList.innerHTML = '<div class="muted">暂无历史记录。</div>';
+            return;
+        }
+
+        historyList.innerHTML = items.map(item => `
+            <div class="list-item" onclick="showDetail('${escapeHtml(item.id || '')}')">
+                <div class="list-top">
+                    <strong>${escapeHtml(item.createdAt || '')}</strong>
+                    <span class="pill">${escapeHtml(item.platform || item.source || 'manual')} · ${escapeHtml(item.reviewScope || 'general')}</span>
+                </div>
+                <div>评分：<strong class="${scoreClass(Number(item.score || 0))}">${escapeHtml(item.score ?? 0)}</strong></div>
+                <div class="muted">文件：${escapeHtml(item.filePath || 'unknown')} · 风险数：${escapeHtml(item.riskCount ?? 0)} · 耗时：${escapeHtml(item.analysisLatencyMs ?? 0)}ms</div>
+                <div>${escapeHtml(item.summary || '暂无摘要')}</div>
+            </div>
+        `).join('');
+    }
+
+    function updateHistoryMeta() {
+        const total = historyState.total || 0;
+        const totalPages = historyState.totalPages || 0;
+        const page = historyState.page + 1;
+        document.getElementById('historyMeta').textContent = total === 0
+            ? '暂无匹配结果'
+            : `第 ${page} / ${Math.max(totalPages, 1)} 页，共 ${total} 条`;
+    }
+
+    function shortHash(value) {
+        const text = String(value || '');
+        return text.length > 12 ? text.slice(0, 12) : text;
+    }
+
+    function renderTrend(trend) {
+        const trendList = document.getElementById('trendList');
+        if (!Array.isArray(trend) || trend.length === 0) {
+            trendList.innerHTML = '<div class="muted">暂无趋势数据。</div>';
+            return;
+        }
+
+        trendList.innerHTML = trend.slice(-8).map(item => {
+            const score = Number(item.score || 0);
+            const width = Math.max(0, Math.min(100, score));
+            return `
+                <div class="trend-row">
+                    <div>${escapeHtml(item.createdAt || '')}</div>
+                    <div class="trend-bar"><span style="width:${width}%"></span></div>
+                    <div>${escapeHtml(score)}</div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function buildHistoryQuery() {
+        const page = historyState.page || 0;
+        const size = Number(document.getElementById('historySize').value || 10);
+        const source = document.getElementById('historySource').value;
+        const reviewScope = document.getElementById('historyScope').value.trim();
+        const filePath = document.getElementById('historyFile').value.trim();
+        const highRisk = document.getElementById('historyHighRisk').value;
+        const params = new URLSearchParams();
+        params.set('page', String(page));
+        params.set('size', String(size));
+        if (source) params.set('source', source);
+        if (reviewScope) params.set('reviewScope', reviewScope);
+        if (filePath) params.set('filePath', filePath);
+        if (highRisk !== '') params.set('highRisk', highRisk);
+        return params.toString();
+    }
+
+    async function loadHistory() {
+        const response = await apiFetch(`/api/jayagent/history?${buildHistoryQuery()}`);
+        const data = await response.json();
+        historyState.page = Number(data.page || 0);
+        historyState.totalPages = Number(data.totalPages || 0);
+        historyState.total = Number(data.total || 0);
+        renderStats(data.stats || {});
+        renderHistory(data.items || []);
+        renderTrend(data.trend || []);
+        updateHistoryMeta();
+        if (Array.isArray(data.items) && data.items.length > 0) {
+            showDetail(data.items[0].id);
+        } else {
+            document.getElementById('detailPanel').innerHTML = '<div class="muted">点击一条历史记录查看完整详情。</div>';
+        }
+    }
+
+    function applyHistoryFilters() {
+        historyState.page = 0;
+        loadHistory().catch(error => {
+            document.getElementById('historyList').innerHTML = `<div class="value danger">加载历史失败：${escapeHtml(error.message)}</div>`;
+        });
+    }
+
+    function resetHistoryFilters() {
+        document.getElementById('historySource').value = '';
+        document.getElementById('historyScope').value = '';
+        document.getElementById('historyFile').value = '';
+        document.getElementById('historyHighRisk').value = '';
+        document.getElementById('historySize').value = '10';
+        historyState.page = 0;
+        loadHistory().catch(error => {
+            document.getElementById('historyList').innerHTML = `<div class="value danger">加载历史失败：${escapeHtml(error.message)}</div>`;
+        });
+    }
+
+    function prevPage() {
+        if (historyState.page <= 0) return;
+        historyState.page -= 1;
+        loadHistory().catch(error => {
+            document.getElementById('historyList').innerHTML = `<div class="value danger">加载历史失败：${escapeHtml(error.message)}</div>`;
+        });
+    }
+
+    function nextPage() {
+        if (historyState.page + 1 >= historyState.totalPages) return;
+        historyState.page += 1;
+        loadHistory().catch(error => {
+            document.getElementById('historyList').innerHTML = `<div class="value danger">加载历史失败：${escapeHtml(error.message)}</div>`;
+        });
+    }
+
+    function renderDetail(item) {
+        const detailPanel = document.getElementById('detailPanel');
+        if (!item) {
+            detailPanel.innerHTML = '<div class="muted">未找到详情。</div>';
+            return;
+        }
+
+        const risks = Array.isArray(item.risks) ? item.risks : [];
+        const sourceLink = item.sourceUrl
+            ? `<a class="pill" href="${escapeHtml(item.sourceUrl)}" target="_blank" rel="noopener noreferrer">打开源 PR/MR</a>`
+            : '<span class="muted">暂无平台链接</span>';
+        detailPanel.innerHTML = `
+            <div class="grid-3">
+                <div class="stat">
+                    <span class="label">记录 ID</span>
+                    <div class="muted" style="word-break: break-all;">${escapeHtml(item.id || '')}</div>
+                </div>
+                <div class="stat">
+                    <span class="label">审查范围</span>
+                    <span class="pill">${escapeHtml(item.reviewScope || 'general')}</span>
+                </div>
+                <div class="stat">
+                    <span class="label">审查来源</span>
+                    <span class="pill">${escapeHtml(item.platform || item.source || 'manual')}</span>
+                </div>
+            </div>
+
+            <div class="summary-box" style="margin-top: 14px;">
+                <h3>平台引用</h3>
+                <div>仓库：${escapeHtml(item.repository || 'manual')}</div>
+                <div>分支：${escapeHtml(item.branch || '-')}</div>
+                <div>Commit：${escapeHtml(shortHash(item.commitSha || '')) || '-'}</div>
+                <div>PR：${escapeHtml(item.prNumber || '-')} · MR：${escapeHtml(item.mrIid || '-')}</div>
+                <div>Diff Hash：${escapeHtml(shortHash(item.diffHash || '')) || '-'}</div>
+                <div style="margin-top: 10px;">${sourceLink}</div>
+            </div>
+
+            <div class="summary-box" style="margin-top: 14px;">
+                <h3>核心信息</h3>
+                <div>文件路径：${escapeHtml(item.filePath || 'unknown')}</div>
+                <div>综合评分：<strong class="${scoreClass(Number(item.score || 0))}">${escapeHtml(item.score ?? 0)}</strong></div>
+                <div>风险状态：${item.highRisk ? '高风险' : '正常'}</div>
+                <div>审查耗时：${escapeHtml(item.analysisLatencyMs ?? 0)}ms</div>
+                <div>创建时间：${escapeHtml(item.createdAt || '')}</div>
+                <div>风险数：${escapeHtml(item.riskCount ?? 0)} · CRITICAL：${escapeHtml(item.criticalCount ?? 0)} · HIGH：${escapeHtml(item.highCount ?? 0)}</div>
+            </div>
+
+            <div class="summary-box">
+                <h3>摘要</h3>
+                <div>${escapeHtml(item.summary || '暂无摘要')}</div>
+            </div>
+
+            <div class="summary-box">
+                <h3>风险明细</h3>
+                ${risks.length === 0 ? '<div class="muted">此条记录未发现明显风险。</div>' : risks.map(r => `
+                    <div class="risk-item ${riskClass(r.level)}">
+                        <div><strong>[${escapeHtml(r.level || '')}] ${escapeHtml(r.title || '')}</strong></div>
+                        <div class="muted">${escapeHtml(r.category || '')} ${r.ruleId ? '· 规则 ' + escapeHtml(r.ruleId) : ''}</div>
+                        <div class="muted">${escapeHtml(r.location || 'unknown')} · 置信度 ${escapeHtml(r.confidence ?? '')}</div>
+                        <p>${escapeHtml(r.description || '')}</p>
+                        <p><strong>建议：</strong>${escapeHtml(r.suggestion || '')}</p>
+                        ${r.sourceReference ? `<div class="muted">来源：${escapeHtml(r.sourceReference)}</div>` : ''}
+                        ${r.sourceContext ? `<details><summary>查看来源上下文</summary><pre>${escapeHtml(r.sourceContext)}</pre></details>` : ''}
+                    </div>
+                `).join('')}
+            </div>
+
+            <details style="margin-top: 14px;">
+                <summary>查看原始分析</summary>
+                <pre>${escapeHtml(item.rawAnalysis || '')}</pre>
+            </details>
+        `;
+    }
+
+    async function showDetail(id) {
+        if (!id) {
+            document.getElementById('detailPanel').innerHTML = '<div class="muted">未找到详情。</div>';
+            return;
+        }
+
+        try {
+            const response = await apiFetch(`/api/jayagent/history/${encodeURIComponent(id)}`);
+            const data = await response.json();
+            renderDetail(data.item);
+        } catch (error) {
+            document.getElementById('detailPanel').innerHTML = `<div class="value danger">加载详情失败：${escapeHtml(error.message)}</div>`;
+        }
+    }
+
+    async function scan() {
+        const codeDiff = document.getElementById('codeDiff').value;
+        const filePath = document.getElementById('filePath').value || 'unknown';
+        const reviewScope = document.getElementById('reviewScope').value || 'general';
+        const resultDiv = document.getElementById('result');
+
+        if (!codeDiff.trim()) {
+            alert('请先粘贴代码变更内容。');
+            return;
+        }
+
+        resultDiv.innerHTML = '<div class="muted">正在分析中...</div>';
+
+        try {
+            const response = await apiFetch('/api/jayagent/scan', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ codeDiff, filePath, reviewScope })
+            });
+
+            const data = await response.json();
+            const risks = Array.isArray(data.risks) ? data.risks : [];
+            const summary = data.summary || '暂无摘要';
+            const score = Number(data.score || 0);
+
+            resultDiv.innerHTML = `
+                <div class="grid-3">
+                    <div class="stat">
+                        <span class="label">审查范围</span>
+                        <span class="pill">${escapeHtml(data.reviewScope || reviewScope)}</span>
+                    </div>
+                    <div class="stat">
+                        <span class="label">综合评分</span>
+                        <span class="value ${scoreClass(score)}">${escapeHtml(score)}</span>
+                    </div>
+                    <div class="stat">
+                        <span class="label">风险状态</span>
+                        <span class="pill">${data.highRisk ? '高风险' : '正常'}</span>
+                    </div>
+                </div>
+
+                <div class="summary-box" style="margin-top: 14px;">
+                    <h3>摘要</h3>
+                    <div>${escapeHtml(summary)}</div>
+                </div>
+
+                <div class="summary-box">
+                    <h3>风险项</h3>
+                    ${risks.length === 0 ? '<div class="muted">未发现明显风险。</div>' : risks.map(r => `
+                        <div class="risk-item ${riskClass(r.level)}">
+                            <div><strong>[${escapeHtml(r.level || '')}] ${escapeHtml(r.title || '')}</strong></div>
+                            <div class="muted">${escapeHtml(r.category || '')} ${r.ruleId ? '· 规则 ' + escapeHtml(r.ruleId) : ''}</div>
+                            <div class="muted">${escapeHtml(r.location || 'unknown')} · 置信度 ${escapeHtml(r.confidence ?? '')}</div>
+                            <p>${escapeHtml(r.description || '')}</p>
+                            <p><strong>建议：</strong>${escapeHtml(r.suggestion || '')}</p>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <details>
+                    <summary>查看原始分析</summary>
+                    <pre>${escapeHtml(data.rawAnalysis || '')}</pre>
+                </details>
+            `;
+
+            await loadHistory();
+        } catch (error) {
+            resultDiv.innerHTML = `<div class="value danger">分析失败：${escapeHtml(error.message)}</div>`;
+        }
+    }
+
+    loadHistory().catch(error => {
+        document.getElementById('historyList').innerHTML = `<div class="value danger">加载历史失败：${escapeHtml(error.message)}</div>`;
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,263 @@
+# Java代码安全与合规规范
+
+## 规则1：禁止硬编码密钥
+任何代码中不应出现硬编码的API密钥、数据库密码、Token等敏感凭证。
+应使用环境变量、配置中心或密钥管理服务（如阿里云KMS）。
+
+错误示例：
+```java
+String apiKey = "sk-abc123def456";
+String dbPassword = "admin123";
+```
+
+正确示例：
+```java
+String apiKey = System.getenv("API_KEY");
+String dbPassword = config.getDatabasePassword();
+```
+
+修复建议：
+- 把敏感凭证移到环境变量或配置中心。
+- 如果是第三方服务密钥，优先使用密钥管理服务。
+- 检查日志、测试代码和示例配置中是否泄露了密钥。
+
+## 规则2：敏感信息脱敏
+日志输出中不得包含用户手机号、身份证号、银行卡号等个人敏感信息。
+必须使用脱敏工具类进行处理。
+
+错误示例：
+```java
+log.info("用户手机号：" + phone);
+System.out.println("身份证号：" + idCard);
+```
+
+正确示例：
+```java
+log.info("用户手机号：{}", MaskingUtil.maskPhone(phone));
+System.out.println("身份证号：" + MaskingUtil.maskIdCard(idCard));
+```
+
+修复建议：
+- 对手机号、身份证号、银行卡号、邮箱等字段统一脱敏。
+- 检查异常日志和调试日志是否包含原始敏感值。
+- 返回给前端的错误信息不要直接拼接用户隐私字段。
+
+## 规则3：SQL注入防护
+所有数据库查询必须使用参数化查询或ORM框架的预编译语句。
+禁止字符串拼接构造SQL。
+
+错误示例：
+```java
+String sql = "SELECT * FROM users WHERE name = '" + userName + "'";
+Statement stmt = conn.createStatement();
+ResultSet rs = stmt.executeQuery("SELECT * FROM users WHERE id = " + userId);
+```
+
+正确示例：
+```java
+String sql = "SELECT * FROM users WHERE name = ?";
+PreparedStatement stmt = conn.prepareStatement(sql);
+stmt.setString(1, userName);
+```
+
+修复建议：
+- 所有外部输入进入 SQL 前必须参数化。
+- 禁止把用户输入直接拼接进查询语句。
+- 对动态排序字段、表名和列名使用白名单。
+
+## 规则4：开源许可证合规
+使用第三方依赖前，必须检查其开源许可证类型。
+GPL/AGPL等强传染性许可证的库，不得引入商业闭源项目。
+
+错误示例：
+```text
+直接引入来源不明的开源包，未检查许可证和合规性。
+```
+
+正确示例：
+```text
+在引入依赖前先检查许可证类型、版本来源和项目用途，再决定是否使用。
+```
+
+修复建议：
+- 新增依赖前先核对许可证和维护状态。
+- 对强传染性许可证依赖建立白名单或审批流程。
+- 定期扫描依赖树中的许可证风险。
+
+## 规则5：异常处理规范
+不得在catch块中仅打印堆栈而不进行任何处理。
+不得将异常信息直接返回给前端。
+
+错误示例：
+```java
+try {
+    service.doSomething();
+} catch (Exception e) {
+    e.printStackTrace();
+}
+```
+
+正确示例：
+```java
+try {
+    service.doSomething();
+} catch (BusinessException e) {
+    log.warn("业务处理失败: {}", e.getMessage(), e);
+    throw e;
+}
+```
+
+修复建议：
+- 区分可恢复异常和不可恢复异常。
+- 统一异常处理并返回稳定错误格式。
+- 不要把堆栈、SQL、系统路径直接暴露给前端。
+
+## 规则6：权限与访问控制
+所有外部接口必须进行身份认证和权限校验。
+不得在代码中注释掉权限检查代码。
+敏感操作必须有操作日志记录。
+
+错误示例：
+```java
+// if (!hasPermission(user)) return;
+deleteUser(userId);
+```
+
+正确示例：
+```java
+if (!authService.hasPermission(user, "USER_DELETE")) {
+    throw new AccessDeniedException("permission denied");
+}
+auditService.record(user, "USER_DELETE", userId);
+deleteUser(userId);
+```
+
+修复建议：
+- 对外接口默认按最小权限原则设计。
+- 敏感操作前必须检查角色、资源范围和操作权限。
+- 审计日志应记录操作者、动作、目标对象和时间。
+
+## 规则7：Spring Security / Session / Cookie 安全
+使用 Session/Cookie 维持登录态时，必须配置 `HttpOnly`、`Secure` 和合理的 `SameSite` 策略。
+前端跨域调用需要显式处理 `withCredentials`，后端必须正确配置 CORS。
+不得在未授权的情况下直接暴露用户身份信息、角色信息或登录态相关接口。
+涉及权限的接口必须区分认证失败（401）和权限不足（403）。
+
+错误示例：
+```java
+response.addCookie(new Cookie("JSESSIONID", sessionId));
+```
+
+正确示例：
+```java
+Cookie cookie = new Cookie("JSESSIONID", sessionId);
+cookie.setHttpOnly(true);
+cookie.setSecure(true);
+cookie.setPath("/");
+```
+
+修复建议：
+- 登录态 Cookie 必须启用 HttpOnly、Secure 和合理的 SameSite。
+- 前后端跨域时统一校验 CORS 和凭证携带策略。
+- 401 表示未认证，403 表示已认证但无权限，不能混用。
+
+## 规则8：XSS / CSRF / 路径穿越 / 文件上传安全
+所有用户可控输入都应进行输出编码或过滤，防止 XSS。
+涉及表单提交、敏感状态变更的接口应考虑 CSRF 防护。
+文件路径、下载路径和资源路径不得直接拼接用户输入，必须做白名单或目录约束，防止路径穿越。
+文件上传必须校验扩展名、MIME 类型、大小、存储位置和访问权限。
+
+错误示例：
+```java
+String path = "/data/files/" + fileName;
+return Files.readString(Path.of(path));
+```
+
+正确示例：
+```java
+Path baseDir = Path.of("/data/files").toAbsolutePath().normalize();
+Path target = baseDir.resolve(fileName).normalize();
+if (!target.startsWith(baseDir)) {
+    throw new IllegalArgumentException("invalid path");
+}
+```
+
+修复建议：
+- 所有用户输入都要做白名单校验或编码。
+- 上传文件名、存储目录和访问路径要分离。
+- 敏感表单和状态变更接口要考虑 CSRF 防护。
+
+## 规则9：工程异常处理 / 日志 / 敏感信息泄露
+异常处理必须区分可恢复错误和不可恢复错误，不能吞异常也不能只打印堆栈。
+日志中不得输出密码、Token、密钥、身份证号、银行卡号、完整请求体等敏感信息。
+对外返回的错误信息应简洁明确，不得直接透出数据库表名、堆栈、内部 SQL 或系统路径。
+
+错误示例：
+```java
+catch (Exception e) {
+    log.error("error: {}", requestBody, e);
+    return e.getMessage();
+}
+```
+
+正确示例：
+```java
+catch (Exception e) {
+    log.error("request failed, requestId={}", requestId, e);
+    throw new ServiceException("request failed");
+}
+```
+
+修复建议：
+- 日志只记录必要的上下文和 requestId。
+- 敏感请求体、密钥和堆栈应脱敏或避免打印。
+- 错误返回给前端时使用稳定错误码和简短消息。
+
+## 规则10：依赖安全 / 许可证合规 / 供应链风险
+引入第三方依赖前必须检查版本漏洞、许可证类型和维护状态。
+禁止直接使用有已知高危漏洞且未修复的依赖版本。
+强传染性许可证、未知来源包和未经审计的脚本应谨慎引入。
+升级依赖后应重新跑安全测试和回归测试。
+
+错误示例：
+```text
+直接升级或引入依赖，未检查 CVE、许可证和版本兼容性。
+```
+
+正确示例：
+```text
+先评估依赖风险，再锁定版本，最后通过测试和扫描后再合并。
+```
+
+修复建议：
+- 对依赖做版本锁定和安全扫描。
+- 升级依赖前先看变更日志和兼容性说明。
+- 发现高危漏洞时优先替换或隔离使用。
+
+## 规则11：工程规范类问题
+方法过长、嵌套过深、重复逻辑、魔法值、命名不清、过宽异常捕获都应被标记为可优化问题。
+资源必须显式关闭，避免连接、流、句柄泄露。
+公共接口返回值应保持稳定，避免前后端契约频繁变化。
+关键业务逻辑应尽量写成可测试、可复用、可追踪的结构化代码。
+
+错误示例：
+```java
+public void handle() {
+    // 一大坨逻辑、多个重复分支、直接 new 资源不关闭
+}
+```
+
+正确示例：
+```java
+public void handle() {
+    validateInput();
+    processCore();
+    persistResult();
+}
+```
+
+修复建议：
+- 拆分长方法和重复逻辑。
+- 把魔法值提成常量或配置项。
+- 对资源使用 try-with-resources。
+- 保持 API 和返回结构稳定。

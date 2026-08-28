@@ -1,0 +1,83 @@
+spring:
+  application:
+    name: JayAgent-review
+
+  ai:
+    model:
+      chat: openai
+      embedding: openai
+
+    openai:
+      api-key: ${DEEPSEEK_API_KEY}
+      base-url: https://api.deepseek.com
+      chat:
+        model: deepseek-v4-flash
+        options:
+          temperature: 0.1
+      embedding:
+        model: text-embedding-3-small
+
+    vectorstore:
+      elasticsearch:
+        initialize-schema: true
+        index-name: spring_ai_vector_index
+
+  elasticsearch:
+    uris: ${SPRING_ELASTICSEARCH_URIS:http://localhost:9200}
+  mvc:
+    log-resolved-exception: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+app:
+  security:
+    api-key-enabled: true
+    api-key: ${JAYAGENT_API_KEY:}
+    expose-raw-analysis: false
+    persist-raw-analysis: false
+  jayagent:
+    knowledge-base:
+      auto-init: true
+      source-path: classpath:knowledge/java_security_rules.txt
+      state-file: data/knowledge-base-state.txt
+      min-score: 0.3
+    scoring:
+      critical-penalty: 25
+      high-penalty: 10
+      medium-penalty: 5
+      low-penalty: 1
+      confidence-weight: 0.5
+      duplicate-risk-factor: 0.5
+    diff:
+      max-file-chars: 20000
+      max-total-chars: 100000
+      page-size: 100
+      max-pages: 20
+    webhook:
+      dedup-store-type: file
+      dedup-store: data/webhook-events.log
+      shared-secret: ${JAYAGENT_WEBHOOK_SHARED_SECRET:}
+      github-secret: ${JAYAGENT_GITHUB_WEBHOOK_SECRET:}
+      gitlab-token: ${JAYAGENT_GITLAB_WEBHOOK_TOKEN:}
+      strict-mode: true
+      max-body-length: 100000
+      require-event-id: true
+      allow-shared-secret-fallback: true
+      dedup:
+        ttl-days: 30
+    external-api:
+      connect-timeout-millis: 3000
+      read-timeout-millis: 10000
+      max-retries: 2
+      retry-backoff-millis: 300
+  review-history:
+    database-file: data/review-history.db
+    legacy-file: data/review-history.jsonl

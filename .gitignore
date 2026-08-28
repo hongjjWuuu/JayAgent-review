@@ -1,0 +1,79 @@
+# Maven build output
+target/
+build/
+*.class
+
+# Keep Maven Wrapper files
+!.mvn/wrapper/maven-wrapper.jar
+
+# Runtime data and local databases
+data/*.db
+data/*.sqlite
+data/*.sqlite3
+*.db
+*.sqlite
+*.sqlite3
+
+# Application logs
+*.log
+logs/
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# JayAgent-review runtime state
+data/knowledge-base-state.txt
+data/*.log
+
+# Java package files
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# IDE: IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# IDE: Eclipse / STS
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache
+.apt_generated
+
+# IDE: NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# IDE: VS Code
+.vscode/*
+!.vscode/launch.json
+!.vscode/tasks.json
+!.vscode/extensions.json
+
+# Operating system
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Java virtual machine crash logs
+hs_err_pid*
+replay_pid*
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
