@@ -5,9 +5,9 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>com.jayagent</groupId>
-	<artifactId>jaycode-review</artifactId>
+	<artifactId>jayagent-review</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>jaycode-review</name>
+	<name>jayagent-review</name>
 	<packaging>jar</packaging>
 
 	<properties>

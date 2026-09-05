@@ -15,9 +15,9 @@ services:
       - es-data:/usr/share/elasticsearch/data
 
   # Spring Boot 应用
-  jaycode-review:
+  jayagent-review:
     build: .
-    container_name: jaycode-review
+    container_name: jayagent-review
     ports:
       - "8080:8080"
     environment:
