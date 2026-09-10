@@ -124,7 +124,10 @@ public class WebhookReviewTaskRepository {
     private Optional<WebhookReviewTask> claimById(Connection connection, String id, long nowMillis) throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement("""
                 UPDATE webhook_review_task
-                SET status = 'RUNNING', locked_at = ?, updated_at = ?
+                SET status = 'RUNNING',
+                    attempt_count = attempt_count + 1,
+                    locked_at = ?,
+                    updated_at = ?
                 WHERE id = ? AND (
                     status = 'PENDING' OR
                     (status = 'RUNNING' AND locked_at IS NOT NULL AND locked_at <= ?)

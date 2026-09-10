@@ -22,6 +22,7 @@ public class WebhookReviewTaskDispatcher {
 
     private static final Logger log = LoggerFactory.getLogger(WebhookReviewTaskDispatcher.class);
     private static final long RETRY_DELAY_MS = 30_000L;
+    private static final int MAX_ATTEMPTS = 3;
     private final WebhookReviewTaskRepository repository;
     private final WebhookService webhookService;
     private final GitLabApiClient gitLabApiClient;
@@ -81,7 +82,7 @@ public class WebhookReviewTaskDispatcher {
 
     private void process(WebhookReviewTaskRepository.WebhookReviewTask task) {
         try (MDC.MDCCloseable ignored = MDC.putCloseable("requestId", task.requestId() == null ? task.id() : task.requestId())) {
-            log.info("webhook_task_started id={} platform={} attempt={}", task.id(), task.platform(), task.attemptCount() + 1);
+            log.info("webhook_task_started id={} platform={} attempt={}", task.id(), task.platform(), task.attemptCount());
             if ("github".equalsIgnoreCase(task.platform())) {
                 processGitHub(task);
             } else if ("gitlab".equalsIgnoreCase(task.platform())) {
@@ -126,9 +127,9 @@ public class WebhookReviewTaskDispatcher {
     }
 
     private void retryOrFail(WebhookReviewTaskRepository.WebhookReviewTask task, Exception ex) {
-        int attempts = task.attemptCount() + 1;
+        int attempts = task.attemptCount();
         try {
-            if (attempts < 3) {
+            if (attempts < MAX_ATTEMPTS) {
                 repository.markRetry(task.id(), ex.getMessage(), Instant.now().toEpochMilli() + RETRY_DELAY_MS);
                 log.warn("Webhook review task retry scheduled id={} attempts={}", task.id(), attempts, ex);
             } else {
