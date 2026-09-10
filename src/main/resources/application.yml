@@ -43,6 +43,9 @@ app:
     api-key: ${JAYAGENT_API_KEY:}
     expose-raw-analysis: false
     persist-raw-analysis: false
+  webhook-review-task:
+    database-file: data/webhook-review-task.db
+    poll-interval-ms: 5000
   jayagent:
     knowledge-base:
       auto-init: true

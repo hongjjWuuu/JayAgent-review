@@ -4,11 +4,12 @@
 
 ## 1. 当前配置总览
 
-`src/main/resources/application.yml` 现在主要分成四块：
+`src/main/resources/application.yml` 现在主要分成五块：
 
 - `spring.*`：Spring AI、DeepSeek、Elasticsearch 相关配置
 - `app.security.*`：接口鉴权相关配置
 - `app.jayagent.*`：规则库和评分配置
+- `app.webhook-review-task.*`：Webhook 异步任务数据库和轮询配置
 - `app.review-history.*`：历史存储配置
 - `management.*`：Actuator 健康检查和 Prometheus 指标端点
 
@@ -161,12 +162,12 @@
 
 ### `app.webhook-review-task.database-file`
 
-- 当前值：`data/webhook-review-task.db`
+- 当前值：`data/webhook-review-task.db`（已在 `application.yml` 中显式配置）
 - 用途：Webhook 异步任务表数据库文件
 
 ### `app.webhook-review-task.poll-interval-ms`
 
-- 当前默认值：`5000`
+- 当前值：`5000`（已在 `application.yml` 中显式配置）
 - 用途：后台轮询任务表的间隔
 
 ## 7. 外部 API 配置

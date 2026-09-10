@@ -185,12 +185,21 @@ mvn -s maven-settings-aliyun.xml -U `
 - [`note/可观测性与部署说明.md`](note/可观测性与部署说明.md)：关联 ID、Prometheus 指标和部署边界
 - [`note/webhook-openapi.md`](note/webhook-openapi.md)：Webhook 接口契约
 
-## 当前边界和后续方向
+## 当前状态和后续方向
 
-当前主链路已经可以运行，但仍适合继续完善：
+截至 2026 年 9 月 10 日，项目已经完成以下主要能力：
 
-- 将 `WebhookController` 的鉴权、payload 解析和异步调度进一步拆分
-- 将 `ReviewHistoryService` 拆为 Repository、Mapper、统计和迁移组件
-- 增加更完整的 Webhook 集成测试和外部系统联调测试
-- 将文件型去重存储升级为适合多实例部署的共享存储
-- 补充指标、链路追踪和 OpenAPI 文档
+- Webhook 鉴权、平台解析、Diff 组装和异步任务派发已经拆分到独立组件。
+- Webhook 任务已经写入 SQLite，支持重试次数持久化、失败终止和重启后恢复。
+- 审查历史已经拆分为 Repository、Mapper、统计服务和迁移器。
+- 已接入请求关联 ID、结构化 JSON 日志、Actuator 和 Prometheus 指标。
+- Docker Compose 已支持认证变量传递、`data/` 目录挂载、服务健康检查和 Elasticsearch 就绪依赖。
+- 已补充 Webhook OpenAPI 说明、任务重试测试以及本地配置和部署文档。
+
+当前仍需继续推进的事项：
+
+- 使用 Docker Desktop 完成真实的启动、停止、重建和数据恢复验证。
+- 增加更完整的 GitHub/GitLab 真实平台联调测试。
+- 将文件或 SQLite 去重演进为适合跨主机多实例的 Redis 或集中式数据库。
+- 为进程内异步任务继续评估消息队列或外部任务系统。
+- 补充 OpenAPI 自动生成、链路追踪和生产级告警规则。
