@@ -13,6 +13,12 @@ services:
       - "9300:9300"
     volumes:
       - es-data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent http://localhost:9200/_cluster/health?wait_for_status=yellow || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
 
   # Spring Boot 应用
   jayagent-review:
@@ -22,12 +28,25 @@ services:
       - "8080:8080"
     environment:
       - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - JAYAGENT_API_KEY=${JAYAGENT_API_KEY}
+      - JAYAGENT_GITHUB_WEBHOOK_SECRET=${JAYAGENT_GITHUB_WEBHOOK_SECRET}
+      - JAYAGENT_GITLAB_WEBHOOK_TOKEN=${JAYAGENT_GITLAB_WEBHOOK_TOKEN}
+      - JAYAGENT_WEBHOOK_SHARED_SECRET=${JAYAGENT_WEBHOOK_SHARED_SECRET}
       - GITHUB_TOKEN=${GITHUB_TOKEN}
       - GITLAB_TOKEN=${GITLAB_TOKEN}
       - WECHAT_WEBHOOK_KEY=${WECHAT_WEBHOOK_KEY}
       - SPRING_ELASTICSEARCH_URIS=http://elasticsearch:9200
+    volumes:
+      - ./data:/app/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent http://localhost:8080/actuator/health | grep -q '\"status\":\"UP\"' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 45s
     depends_on:
-      - elasticsearch
+      elasticsearch:
+        condition: service_healthy
 
 volumes:
   es-data:
